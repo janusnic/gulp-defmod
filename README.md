@@ -33,18 +33,5 @@ define('module1', function(module, exports) {
 });
 ```
 
-The module name of a file is path string after the directory. For example, 
-with `defmod('lib/')`, module name of '/usr/lib/a.js' is a, name of '/usr/lib/b/c.js' is 'b/c'. Note: trim is do only once.
-
-```js
-var concat = require('gulp-concat');
-
-gulp.task('scripts', function() {
-  return gulp.src(['./lib/file3.js', './lib/file1.js', './lib/file2.js'])
-    .pipe(concat('all.js'))
-    .pipe(gulp.dest('./dist/'));
-});
-```
-
 ### LICENSE 
 MIT.
