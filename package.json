@@ -1,6 +1,6 @@
 {
   "name": "gulp-defmod",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "wrap nodejs files with module defination",
   "main": "index.js",
   "scripts": {
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "github.com/cosiner/gulp-defmod"
+    "url": "https://github.com/cosiner/gulp-defmod"
   },
   "keywords": [
     "gulpplugin"
