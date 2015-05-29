@@ -15,8 +15,8 @@ var fs = require('fs');
 //   {relative:'../../../../', path:'' }
 // ]
 function relatives(path, pkgmod) {
-    var curr = '\\./';
-    var parent = '\\.\\./';
+    var rel_curr = '\\./';
+    var rel_parent = '\\.\\./';
 
     var rels = [];
     var addrel = function (rel, path) {
@@ -25,18 +25,19 @@ function relatives(path, pkgmod) {
             path: path
         });
     };
-    var relative = curr;
-    var index;
+
+    var relative = rel_curr;
+    var slash;
     do {
-        index = path.lastIndexOf('/');
-        path = (index === -1 ? '' : path.slice(0, index));
+        slash = path.lastIndexOf('/');
+        path = (slash === -1 ? '' : path.slice(0, slash));
         addrel(relative, path === '' ? path : path + '/');
-        if (relative === curr) {
-            addrel(quote(parent), pkgmod);
+        if (relative === rel_curr) {
+            addrel(quote(rel_parent), pkgmod);
             addrel(quote('\\.\\.'), pkgmod);
         }
-        relative = (relative === curr ? parent : relative + parent);
-    } while (index !== -1);
+        relative = (relative === rel_curr ? rel_parent : relative + rel_parent);
+    } while (slash !== -1);
 
     return rels;
 }
@@ -45,8 +46,7 @@ function quote(s) {
     return "'" + s + "'";
 }
 
-
-function pkgmain(dirpath) {
+function mainModule(dirpath) {
     var file = 'index.js';
     try {
         var pjson = require(filepath.join(dirpath, 'package.json'));
@@ -85,7 +85,7 @@ module.exports = function (opt) {
     opt = opt || {};
 
     var dirpath = filepath.resolve(opt.dir || '.') + filepath.sep;
-    var main = pkgmain(dirpath);
+    var main = mainModule(dirpath);
     var pkgname;
 
     var modutil = {};

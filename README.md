@@ -6,7 +6,7 @@
 </tr>
 <tr>
 <td>Description</td>
-<td>Wrap js files with module defination</td>
+<td>Convert nodejs package for front-end</td>
 </tr>
 <tr>
 <td>Node Version</td>
@@ -18,11 +18,16 @@
 
 ```js
 var defmod = require('gulp-defmod');
+var concat = require('gulp-concat');
 
 gulp.task('scripts', function() {
-  return gulp.src('./lib/*.js')
-    .pipe(defmod("lib/"))
-    .pipe(gulp.dest('dist'));
+  return gulp.src('package/*.js')
+    .pipe(defmod({
+        dir:'package',
+        moduler:true
+    }))
+    .pipe(concat('dist.js'))
+    .pipe(gulp.dest('.'));
 });
 ```
 
@@ -32,6 +37,7 @@ define('module1', function(module, exports) {
 // original file contents here
 });
 ```
+and also, replace all relative path exists in `require'.
 
 ### LICENSE 
 MIT.
