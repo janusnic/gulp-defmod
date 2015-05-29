@@ -1,6 +1,6 @@
 {
   "name": "gulp-defmod",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "wrap nodejs files with module defination",
   "main": "index.js",
   "scripts": {
@@ -20,6 +20,7 @@
     "through2": "^0.6.5"
   },
   "devDependencies": {
-    "gulp": "^3.8.11"
+    "gulp": "^3.8.11",
+    "gulp-concat": "^2.5.2"
   }
 }

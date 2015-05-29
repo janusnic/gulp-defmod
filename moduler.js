@@ -1,66 +1,91 @@
-var define, require;
+var define, defineAlias, require;
 
 (function () {
     'use strict';
-    var _modules = {};
-    var _moduleState = {
+    var modules = {};
+    var state = {
         UNINIT: 0, // 未初始化
         WAITINIT: 1 // 正在等待其他模块初始化
     };
 
-    define = function (name, fn) {
-        if (_modules[name]) {
-            throw 'Module ' + name + ' already defined';
-        }
-
-        if (typeof fn !== 'function') {
-            _modules[name] = {
-                exports: fn,
-            };
-        } else {
-            _modules[name] = {
-                _initializer: fn,
-                _state: _moduleState.UNINIT,
-                _path:''
-            };
-        }
-    };
-
-    defineAlias = function(name, alias) {
-        if (_modules[name]) {
-            throw 'Module ' + name + ' already defined';
-        }
-
-        _modules[name] = {
-            _alias:alias
-        }
+    function defined(mod) {
+        return mod.exports || mod._alias || mod._initializer;
     }
 
-    require = function (name) {
-        var module = _modules[name];
-        if (!module) {
-            throw 'Module ' + name + ' not defined';
+    function module(parent, name, isDef) {
+        var names = name.split('/');
+        var curr;
+        names.forEach(function (n, i) {
+            curr = parent[n];
+            if (curr) {
+                if (isDef && i === names.length - 1 && defined(curr)) {
+                    throw 'Module ' + name + ' already defined';
+                }
+            } else {
+                if (!isDef) {
+                    throw 'Module ' + name + ' not defined';
+                }
+
+                curr = {};
+                parent[n] = curr;
+            }
+
+            parent = curr;
+        });
+
+        return curr;
+    }
+
+    define = function (name, fn) {
+        var mod = module(modules, name, true);
+
+        if (typeof fn !== 'function') {
+            mod.exports = fn;
+        } else {
+            mod._initializer = fn;
+            mod._state = state.UNINIT;
         }
 
-        if (module._alias) {
-            return require(module._alias);
+    };
+
+    defineAlias = function (name, alias) {
+        module(modules, name, true)._alias = alias;
+    };
+
+    var requireIn = function(modules, name) {
+        var mod = module(modules, name);
+
+        if (mod._alias) {
+            return requireIn(mod, mod._alias);
         }
 
-        if (module.exports) {
-            return module.exports;
+        if (mod.exports) {
+            return mod.exports;
         }
 
-        if (module._state === _moduleState.WAITINIT) {
-            throw 'Circular dependencies of module' + name;
+        if (mod._state === state.WAITINIT) {
+            throw 'Circular dependencies of mod' + name;
         }
 
         // _state = UNINIT
-        module._state = _moduleState.WAITINIT;
-        module.exports = {};
-        module._initializer(module, module.exports);
-        module._state = undefined;
-        module._initializer = undefined;
+        mod._state = state.WAITINIT;
+        mod.exports = {};
+        mod._initializer(mod, mod.exports);
+        mod._state = undefined;
+        mod._initializer = undefined;
 
-        return module.exports;
+        return mod.exports;
+    }
+
+    require = function (name) {
+        return requireIn(modules, name)
     };
 })();
+
+if (typeof window === 'undefined') {
+    module.exports = {
+        define: define,
+        defineAlias:defineAlias,
+        require: require
+    };
+}
