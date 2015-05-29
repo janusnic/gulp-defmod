@@ -2,12 +2,11 @@
 var through = require('through2');
 var gutil = require('gulp-util');
 var filepath = require('path');
-var gulp = require('gulp');
+var fs = require('fs');
 
 function relatives(path) {
     var prefixes = [];
     var relative = '\\./';
-    console.log(path);
     var index;
     do {
         index = path.lastIndexOf('/');
@@ -18,13 +17,50 @@ function relatives(path) {
         });
 
         relative = (relative === '\\./' ? '\\.\\./' : relative + '\\.\\./');
-    } while (index != -1);
+    } while (index !== -1);
 
     return prefixes;
 }
 
-module.exports = function (dir, inone, sep) {
-    dir = filepath.resolve(dir || ".") + filepath.sep;
+function quote(s) {
+    return '\'' + s + '\'';
+}
+
+function defmod(mod, contents, main) {
+    main = main ? 'defineAlias(' + quote(main) + ', ' + quote(mod) + ');' : '';
+
+    return new Buffer('define(\'' + mod + '\', function(module, exports) {\n' +
+        contents + '\n});\n' + main);
+}
+
+function pkgMainfile(dirpath) {
+    var file = 'index.js';
+    try {
+        var pjson = require(filepath.join(dirpath, 'package.json'));
+        if (pjson.main) {
+            file = pjson.main;
+        }
+    } catch (e) {}
+
+    var path = filepath.join(dirpath, file);
+    var data;
+    if (fs.existsSync(path)) {
+        data = fs.readFileSync(path, 'utf-8');
+    }
+
+    return {
+        file: file,
+        path: path,
+        data: data
+    };
+}
+
+module.exports = function (dir, onedir, sep) {
+    dir = dir || '.';
+    var dirpath = filepath.resolve(dir) + filepath.sep;
+    var pkgname = filepath.basename(dirpath);
+
+    var main = pkgMainfile(dirpath);
 
     function wrap(file, enc, cb) {
         if (file.isNull()) {
@@ -38,13 +74,28 @@ module.exports = function (dir, inone, sep) {
             return;
         }
 
-        var path = file.path.slice(dir.length);
+        if (main.data) {
+            this.push(
+                new gutil.File({
+                    path: onedir ? main.file.replace(/\//g, sep || '-') : mainfile,
+                    contents: defmod(pkgname + '/' + main.file.slice(0, mail.file.length - 3), main.data, pkgname)
+                })
+            );
+            cb();
+            main.data = null;
+        }
+
+        if (file.path === main.path) {
+            return;
+        }
+
+        var path = file.path.slice(dirpath.length);
         if (path === '') { // not under this directory
             cb();
             return;
         }
 
-        if (path.lastIndexOf('.js') + 3 !== path.length) {
+        if (filepath.extname(path) !== '.js') {
             cb();
             return;
         }
@@ -55,18 +106,17 @@ module.exports = function (dir, inone, sep) {
         var prefixes = relatives(modname);
         for (var i = prefixes.length - 1; i >= 0; i--) {
             var pref = prefixes[i];
-            contents = contents.replace(new RegExp(pref.relative, 'g'), pref.path);
+            contents = contents.replace(new RegExp(pref.relative, 'g'), pkgname + '/' + pref.path);
         }
 
-        contents = new Buffer('define(\'' + modname + '\', function(module, exports) {\n' +
-            contents + '\n};')
-        if (inone) {
+        contents = defmod(pkgname + '/' + modname, contents);
+        if (onedir) {
             file = new gutil.File({
                 path: modname.replace(/\//g, sep || '-') + '.js'
             });
         }
-
         file.contents = contents;
+
         this.push(file);
         cb();
     }
