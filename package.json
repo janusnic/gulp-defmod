@@ -18,5 +18,8 @@
   "dependencies": {
     "gulp-util": "^3.0.4",
     "through2": "^0.6.5"
+  },
+  "devDependencies": {
+    "gulp": "^3.8.11"
   }
 }
