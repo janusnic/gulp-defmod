@@ -1,6 +1,6 @@
 {
   "name": "gulp-defmod",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "convert nodejs package for front-end",
   "main": "index.js",
   "scripts": {
